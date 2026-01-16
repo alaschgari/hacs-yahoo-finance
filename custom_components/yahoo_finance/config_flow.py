@@ -39,11 +39,13 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         try:
             # Wrap BOTH the data fetch and the attribute check in the executor to avoid blocking the event loop
             def check_validity(t):
-                # fast_info.get("currency") might trigger a network request internally
+                # fast_info is a proxy object, not a dict
                 try:
-                    return t.fast_info.get("currency")
+                    # Tickers for shares, ETFs, etc. have a currency
+                    return hasattr(t.fast_info, "currency") and t.fast_info.currency is not None
                 except Exception:
                     # Fallback: check if we can get any history data
+                    _LOGGER.debug("fast_info failed for %s, trying history fallback", symbol)
                     hist = t.history(period="1d")
                     return not hist.empty
 
@@ -52,7 +54,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             if is_valid:
                 valid_symbols.append(symbol)
             else:
-                _LOGGER.warning("Symbol %s could not be validated", symbol)
+                _LOGGER.warning("Symbol %s could not be validated (not found or delisted? history empty)", symbol)
         except Exception as err:
             _LOGGER.warning("Could not validate symbol %s: %s", symbol, err)
             continue
