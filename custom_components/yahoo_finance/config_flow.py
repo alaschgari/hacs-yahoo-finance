@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN, CONF_SYMBOLS, HEADERS
+from .const import DOMAIN, CONF_SYMBOLS, get_headers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,36 +27,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     """
     symbols = [s.strip().upper() for s in data[CONF_SYMBOLS].split(",")]
     
-    # Check if symbols are valid (at least one)
+    # We disable API validation here to avoid 429/Blocking calls during setup
+    # Just check if the symbols look like valid ticker symbols
     valid_symbols = []
-    session = requests.Session()
-    session.headers.update(HEADERS)
-
     for symbol in symbols:
-        ticker = yf.Ticker(symbol, session=session)
-        try:
-            # Wrap BOTH the data fetch and the attribute check in the executor
-            def check_validity(t):
-                try:
-                    # Tickers for shares, ETFs, etc. have a currency
-                    return hasattr(t.fast_info, "currency") and t.fast_info.currency is not None
-                except Exception as exc:
-                    _LOGGER.debug("fast_info failed for %s: %s, trying history fallback", symbol, exc)
-                    # Fallback: check if we can get any history data
-                    hist = t.history(period="1d")
-                    return not hist.empty
-
-            is_valid = await hass.async_add_executor_job(check_validity, ticker)
-            
-            if is_valid:
-                valid_symbols.append(symbol)
-            else:
-                # If we get here, yfinance explicitly says no data. 
-                # However, if yfinance is being flaky, we might want to allow it anyway if it's a known symbol format
-                _LOGGER.warning("Symbol %s could not be validated, but adding anyway as fallback", symbol)
-                valid_symbols.append(symbol)
-        except Exception as err:
-            _LOGGER.error("Error during validation of %s: %s. Adding anyway.", symbol, err)
+        if symbol and all(c.isalnum() or c in "-.=_" for c in symbol):
             valid_symbols.append(symbol)
             
     if not valid_symbols:

@@ -8,7 +8,7 @@ import asyncio
 import random
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, HEADERS
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, get_headers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,8 +18,6 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, symbols):
         """Initialize."""
         self.symbols = symbols
-        self.session = requests.Session()
-        self.session.headers.update(HEADERS)
         super().__init__(
             hass,
             _LOGGER,
@@ -29,17 +27,20 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch data from Yahoo Finance."""
-        try:
-            data = {}
-            for symbol in self.symbols:
-                # Small delay to avoid 429
-                await asyncio.sleep(random.uniform(1.0, 2.0))
-                
-                ticker = yf.Ticker(symbol, session=self.session)
-                
-                def fetch_fast_info(t):
+        data = {}
+        for symbol in self.symbols:
+            # Random delay before EACH symbol to avoid detection
+            await asyncio.sleep(random.uniform(2.0, 5.0))
+            
+            # Create a fresh session with random headers for each symbol
+            session = requests.Session()
+            session.headers.update(get_headers())
+            
+            ticker = yf.Ticker(symbol, session=session)
+            
+            def fetch_fast_info(t):
+                try:
                     fi = t.fast_info
-                    # Access attributes inside executor to avoid blocking
                     return {
                         "regularMarketPrice": fi.last_price,
                         "currency": fi.currency,
@@ -47,14 +48,19 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                         "dayHigh": fi.day_high,
                         "dayLow": fi.day_low,
                         "symbol": fi.symbol,
-                        # fast_info doesn't have longName/shortName easily, we'll use symbol
                         "longName": fi.symbol,
                         "shortName": fi.symbol,
                     }
+                except Exception as ex:
+                    _LOGGER.warning("Error fetching %s: %s", symbol, ex)
+                    return None
 
-                info = await self.hass.async_add_executor_job(fetch_fast_info, ticker)
-                if info:
-                    data[symbol] = info
-            return data
-        except Exception as err:
-            raise UpdateFailed(f"Error communicating with Yahoo Finance API: {err}")
+            info = await self.hass.async_add_executor_job(fetch_fast_info, ticker)
+            if info:
+                data[symbol] = info
+            else:
+                _LOGGER.info("No data for %s, skipping this update", symbol)
+                
+        if not data:
+            raise UpdateFailed("Failed to fetch data for any symbol")
+        return data
