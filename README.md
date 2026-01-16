@@ -4,6 +4,10 @@
   <img src="https://raw.githubusercontent.com/alaschgari/hacs-yahoo-finance/main/logo.png" alt="Yahoo Finance Logo" width="200" height="200">
 </p>
 
+> [!WARNING]
+> **Active Development / Alpha State**
+> This integration is currently in active development. Yahoo Finance has significantly tightened its API protections, leading to frequent "429 Too Many Requests" errors. It is highly likely that this integration will NOT work reliably for you at this moment. We are working on stealth methods to bypass these limitations.
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-orange.svg)](https://www.buymeacoffee.com/alaschgari)
 
