@@ -1,11 +1,15 @@
 {
   "domain": "yahoo_finance",
   "name": "Yahoo Finance",
-  "codeowners": ["@alaschgari"],
+  "codeowners": [
+    "@alaschgari"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/alaschgari/hacs-yahoo-finance",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/alaschgari/hacs-yahoo-finance/issues",
-  "requirements": ["yfinance==0.2.51"],
-  "version": "1.0.0"
+  "requirements": [
+    "yfinance==0.2.51"
+  ],
+  "version": "1.2.1"
 }
