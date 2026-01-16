@@ -32,48 +32,53 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
             # Random delay before EACH symbol to avoid detection
             await asyncio.sleep(random.uniform(2.0, 5.0))
             
-            # Create a fresh session with random headers for each symbol
-            session = requests.Session()
-            session.headers.update(get_headers())
-            
-            ticker = yf.Ticker(symbol, session=session)
-            
-            def fetch_ultra_lite_info(t):
+            def fetch_direct(s):
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{s}?range=1d&interval=1d"
+                headers = get_headers()
                 try:
-                    # Using history(period="2d") is much more stable as it uses v8/finance/chart
-                    # which is less guarded than the quoteSummary endpoint.
-                    hist = t.history(period="2d")
-                    if hist.empty:
-                        return None
+                    response = requests.get(url, headers=headers, timeout=15)
+                    response.raise_for_status()
+                    content = response.json()
                     
-                    # Extract metadata from the chart response
-                    meta = t.history_metadata
-                    
-                    last_close = hist["Close"].iloc[-1]
-                    prev_close = hist["Close"].iloc[-2] if len(hist) > 1 else last_close
-                    high = hist["High"].iloc[-1]
-                    low = hist["Low"].iloc[-1]
-                    
-                    return {
-                        "regularMarketPrice": last_close,
-                        "currency": meta.get("currency"),
-                        "regularMarketChangePercent": (last_close - prev_close) / prev_close * 100 if prev_close else 0,
-                        "dayHigh": high,
-                        "dayLow": low,
-                        "symbol": symbol,
-                        "longName": symbol,
-                        "shortName": symbol,
-                    }
-                except Exception as ex:
-                    _LOGGER.warning("Error fetching %s via ultra-lite method: %s", symbol, ex)
-                    return None
+                    if "chart" in content and content["chart"]["result"]:
+                        result = content["chart"]["result"][0]
+                        meta = result["meta"]
+                        
+                        price = meta.get("regularMarketPrice")
+                        prev_close = meta.get("chartPreviousClose")
+                        
+                        # Get high/low from indicators if available
+                        high = price
+                        low = price
+                        try:
+                            quotes = result["indicators"]["quote"][0]
+                            if quotes.get("high"):
+                                high = quotes["high"][0]
+                            if quotes.get("low"):
+                                low = quotes["low"][0]
+                        except (KeyError, IndexError):
+                            pass
 
-            info = await self.hass.async_add_executor_job(fetch_ultra_lite_info, ticker)
+                        return {
+                            "regularMarketPrice": price,
+                            "currency": meta.get("currency"),
+                            "regularMarketChangePercent": (price - prev_close) / prev_close * 100 if price and prev_close else 0,
+                            "dayHigh": high,
+                            "dayLow": low,
+                            "symbol": s,
+                            "longName": s,
+                            "shortName": s,
+                        }
+                except Exception as ex:
+                    _LOGGER.warning("Direct fetch failed for %s: %s", s, ex)
+                return None
+
+            info = await self.hass.async_add_executor_job(fetch_direct, symbol)
             if info:
                 data[symbol] = info
             else:
-                _LOGGER.info("No data for %s, skipping this update", symbol)
+                _LOGGER.info("No data for %s via direct API, skipping", symbol)
                 
         if not data:
-            raise UpdateFailed("Failed to fetch data for any symbol")
+            raise UpdateFailed("Failed to fetch data for any symbol via direct API. Yahoo might be blocking or the symbols are invalid.")
         return data
