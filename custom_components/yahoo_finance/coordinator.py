@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Global cooldown for 429 errors
 _LAST_429_TIME = 0
-_COOLDOWN_DURATION = 1800  # 30 minutes
+_COOLDOWN_DURATION = 300  # 5 minutes
 
 class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Yahoo Finance data."""
