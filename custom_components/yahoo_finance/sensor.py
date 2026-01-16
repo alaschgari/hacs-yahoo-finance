@@ -47,7 +47,8 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.coordinator.data and self.symbol in self.coordinator.data:
-            return self.coordinator.data[self.symbol].get("currentPrice") or self.coordinator.data[self.symbol].get("regularMarketPrice")
+            data = self.coordinator.data[self.symbol]
+            return data.get("regularMarketPrice") or data.get("currentPrice")
         return None
 
     @property
@@ -62,10 +63,11 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
         """Return the state attributes."""
         if self.coordinator.data and self.symbol in self.coordinator.data:
             info = self.coordinator.data[self.symbol]
+            pct_change = info.get("regularMarketChangePercent")
             return {
-                "regularMarketChangePercent": info.get("regularMarketChangePercent"),
-                "regularMarketDayHigh": info.get("dayHigh"),
-                "regularMarketDayLow": info.get("dayLow"),
+                "regularMarketChangePercent": round(pct_change, 2) if pct_change is not None else None,
+                "regularMarketDayHigh": info.get("dayHigh") or info.get("regularMarketDayHigh"),
+                "regularMarketDayLow": info.get("dayLow") or info.get("regularMarketDayLow"),
                 "longName": info.get("longName"),
                 "shortName": info.get("shortName"),
             }

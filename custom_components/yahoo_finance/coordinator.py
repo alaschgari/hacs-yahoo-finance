@@ -4,6 +4,8 @@ import logging
 
 import yfinance as yf
 import requests
+import asyncio
+import random
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, HEADERS
@@ -30,12 +32,27 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             data = {}
             for symbol in self.symbols:
+                # Small delay to avoid 429
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+                
                 ticker = yf.Ticker(symbol, session=self.session)
-                # Ensure the entire .info dict is fetched within the executor
-                def fetch_info(t):
-                    return t.info
+                
+                def fetch_fast_info(t):
+                    fi = t.fast_info
+                    # Access attributes inside executor to avoid blocking
+                    return {
+                        "regularMarketPrice": fi.last_price,
+                        "currency": fi.currency,
+                        "regularMarketChangePercent": (fi.last_price - fi.previous_close) / fi.previous_close * 100 if fi.last_price and fi.previous_close else None,
+                        "dayHigh": fi.day_high,
+                        "dayLow": fi.day_low,
+                        "symbol": fi.symbol,
+                        # fast_info doesn't have longName/shortName easily, we'll use symbol
+                        "longName": fi.symbol,
+                        "shortName": fi.symbol,
+                    }
 
-                info = await self.hass.async_add_executor_job(fetch_info, ticker)
+                info = await self.hass.async_add_executor_job(fetch_fast_info, ticker)
                 if info:
                     data[symbol] = info
             return data
