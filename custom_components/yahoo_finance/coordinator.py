@@ -38,24 +38,37 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
             
             ticker = yf.Ticker(symbol, session=session)
             
-            def fetch_fast_info(t):
+            def fetch_ultra_lite_info(t):
                 try:
-                    fi = t.fast_info
+                    # Using history(period="2d") is much more stable as it uses v8/finance/chart
+                    # which is less guarded than the quoteSummary endpoint.
+                    hist = t.history(period="2d")
+                    if hist.empty:
+                        return None
+                    
+                    # Extract metadata from the chart response
+                    meta = t.history_metadata
+                    
+                    last_close = hist["Close"].iloc[-1]
+                    prev_close = hist["Close"].iloc[-2] if len(hist) > 1 else last_close
+                    high = hist["High"].iloc[-1]
+                    low = hist["Low"].iloc[-1]
+                    
                     return {
-                        "regularMarketPrice": fi.last_price,
-                        "currency": fi.currency,
-                        "regularMarketChangePercent": (fi.last_price - fi.previous_close) / fi.previous_close * 100 if fi.last_price and fi.previous_close else None,
-                        "dayHigh": fi.day_high,
-                        "dayLow": fi.day_low,
-                        "symbol": fi.symbol,
-                        "longName": fi.symbol,
-                        "shortName": fi.symbol,
+                        "regularMarketPrice": last_close,
+                        "currency": meta.get("currency"),
+                        "regularMarketChangePercent": (last_close - prev_close) / prev_close * 100 if prev_close else 0,
+                        "dayHigh": high,
+                        "dayLow": low,
+                        "symbol": symbol,
+                        "longName": symbol,
+                        "shortName": symbol,
                     }
                 except Exception as ex:
-                    _LOGGER.warning("Error fetching %s: %s", symbol, ex)
+                    _LOGGER.warning("Error fetching %s via ultra-lite method: %s", symbol, ex)
                     return None
 
-            info = await self.hass.async_add_executor_job(fetch_fast_info, ticker)
+            info = await self.hass.async_add_executor_job(fetch_ultra_lite_info, ticker)
             if info:
                 data[symbol] = info
             else:
