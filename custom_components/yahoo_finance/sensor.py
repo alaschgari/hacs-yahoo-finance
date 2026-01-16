@@ -39,8 +39,9 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
         """Initialize."""
         super().__init__(coordinator)
         self.symbol = symbol
-        self._attr_unique_id = f"{DOMAIN}_{symbol}"
-        self._attr_name = f"{symbol}"
+        self._attr_unique_id = f"{DOMAIN}_{symbol.lower()}"
+        self._attr_name = symbol
+        self.entity_id = f"sensor.{DOMAIN}_{symbol.lower()}"
 
     @property
     def native_value(self):
