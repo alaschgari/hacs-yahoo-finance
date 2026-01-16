@@ -33,7 +33,6 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
     """Representation of a Yahoo Finance sensor."""
 
     _attr_has_entity_name = True
-    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_device_class = SensorDeviceClass.MONETARY
 
     def __init__(self, coordinator, symbol):
