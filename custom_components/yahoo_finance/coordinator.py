@@ -6,11 +6,9 @@ import yfinance as yf
 import requests
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, HEADERS
 
 _LOGGER = logging.getLogger(__name__)
-
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
 class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Yahoo Finance data."""
@@ -18,6 +16,8 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, symbols):
         """Initialize."""
         self.symbols = symbols
+        self.session = requests.Session()
+        self.session.headers.update(HEADERS)
         super().__init__(
             hass,
             _LOGGER,
@@ -29,11 +29,8 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from Yahoo Finance."""
         try:
             data = {}
-            session = requests.Session()
-            session.headers.update({"User-Agent": USER_AGENT})
-
             for symbol in self.symbols:
-                ticker = yf.Ticker(symbol, session=session)
+                ticker = yf.Ticker(symbol, session=self.session)
                 # Ensure the entire .info dict is fetched within the executor
                 def fetch_info(t):
                     return t.info

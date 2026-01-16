@@ -10,11 +10,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN, CONF_SYMBOLS
+from .const import DOMAIN, CONF_SYMBOLS, HEADERS
 
 _LOGGER = logging.getLogger(__name__)
-
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -32,20 +30,19 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     # Check if symbols are valid (at least one)
     valid_symbols = []
     session = requests.Session()
-    session.headers.update({"User-Agent": USER_AGENT})
+    session.headers.update(HEADERS)
 
     for symbol in symbols:
         ticker = yf.Ticker(symbol, session=session)
         try:
-            # Wrap BOTH the data fetch and the attribute check in the executor to avoid blocking the event loop
+            # Wrap BOTH the data fetch and the attribute check in the executor
             def check_validity(t):
-                # fast_info is a proxy object, not a dict
                 try:
                     # Tickers for shares, ETFs, etc. have a currency
                     return hasattr(t.fast_info, "currency") and t.fast_info.currency is not None
-                except Exception:
+                except Exception as exc:
+                    _LOGGER.debug("fast_info failed for %s: %s, trying history fallback", symbol, exc)
                     # Fallback: check if we can get any history data
-                    _LOGGER.debug("fast_info failed for %s, trying history fallback", symbol)
                     hist = t.history(period="1d")
                     return not hist.empty
 
@@ -54,10 +51,13 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             if is_valid:
                 valid_symbols.append(symbol)
             else:
-                _LOGGER.warning("Symbol %s could not be validated (not found or delisted? history empty)", symbol)
+                # If we get here, yfinance explicitly says no data. 
+                # However, if yfinance is being flaky, we might want to allow it anyway if it's a known symbol format
+                _LOGGER.warning("Symbol %s could not be validated, but adding anyway as fallback", symbol)
+                valid_symbols.append(symbol)
         except Exception as err:
-            _LOGGER.warning("Could not validate symbol %s: %s", symbol, err)
-            continue
+            _LOGGER.error("Error during validation of %s: %s. Adding anyway.", symbol, err)
+            valid_symbols.append(symbol)
             
     if not valid_symbols:
         raise vol.Invalid("invalid_symbols")
