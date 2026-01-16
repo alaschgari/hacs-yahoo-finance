@@ -10,13 +10,23 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN, CONF_SYMBOLS, get_headers
+from .const import (
+    DOMAIN, 
+    CONF_SYMBOLS, 
+    CONF_SHOW_CHANGE_PCT, 
+    CONF_SHOW_HIGH, 
+    CONF_SHOW_LOW, 
+    get_headers
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SYMBOLS): str,
+        vol.Optional(CONF_SHOW_CHANGE_PCT, default=True): bool,
+        vol.Optional(CONF_SHOW_HIGH, default=True): bool,
+        vol.Optional(CONF_SHOW_LOW, default=True): bool,
     }
 )
 
@@ -37,7 +47,13 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     if not valid_symbols:
         raise vol.Invalid("invalid_symbols")
 
-    return {"title": ", ".join(valid_symbols), CONF_SYMBOLS: valid_symbols}
+    return {
+        "title": ", ".join(valid_symbols), 
+        CONF_SYMBOLS: valid_symbols,
+        CONF_SHOW_CHANGE_PCT: data.get(CONF_SHOW_CHANGE_PCT, True),
+        CONF_SHOW_HIGH: data.get(CONF_SHOW_HIGH, True),
+        CONF_SHOW_LOW: data.get(CONF_SHOW_LOW, True),
+    }
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Yahoo Finance."""

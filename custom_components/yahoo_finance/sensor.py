@@ -11,7 +11,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN, 
+    CONF_SYMBOLS, 
+    CONF_SHOW_CHANGE_PCT, 
+    CONF_SHOW_HIGH, 
+    CONF_SHOW_LOW
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,12 +29,19 @@ async def async_setup_entry(
     """Set up Yahoo Finance sensor based on a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     
+    show_change_pct = entry.data.get(CONF_SHOW_CHANGE_PCT, True)
+    show_high = entry.data.get(CONF_SHOW_HIGH, True)
+    show_low = entry.data.get(CONF_SHOW_LOW, True)
+
     entities = []
     for symbol in coordinator.symbols:
         entities.append(YahooFinanceSensor(coordinator, symbol, "price"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "change_pct"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "high"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "low"))
+        if show_change_pct:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "change_pct"))
+        if show_high:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "high"))
+        if show_low:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "low"))
     
     async_add_entities(entities)
 

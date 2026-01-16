@@ -4,6 +4,9 @@ DOMAIN = "yahoo_finance"
 DEFAULT_SCAN_INTERVAL = 3600  # 1 hour
 
 CONF_SYMBOLS = "symbols"
+CONF_SHOW_CHANGE_PCT = "show_change_pct"
+CONF_SHOW_HIGH = "show_high"
+CONF_SHOW_LOW = "show_low"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
