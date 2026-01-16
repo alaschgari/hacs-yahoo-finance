@@ -1,0 +1,16 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "symbols": "Ticker Symbols (comma separated, e.g., AAPL, MSFT, BTC-USD)"
+                },
+                "description": "Enter the Yahoo Finance ticker symbols you want to monitor."
+            }
+        },
+        "error": {
+            "unknown": "Unexpected error",
+            "invalid_symbols": "No valid symbols found."
+        }
+    }
+}
