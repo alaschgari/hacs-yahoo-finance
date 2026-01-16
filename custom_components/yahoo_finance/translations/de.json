@@ -3,9 +3,9 @@
         "step": {
             "user": {
                 "data": {
-                    "symbols": "Ticker-Symbole (kommagetrennt, z.B. AAPL, MSFT, BTC-USD)"
+                    "symbols": "Ticker-Symbole (kommagetrennt)"
                 },
-                "description": "Gib die Yahoo Finance Ticker-Symbole ein, die du überwachen möchtest."
+                "description": "Gib die Yahoo Finance Ticker-Symbole ein, die du überwachen möchtest (z. B. AAPL, MSFT, BTC-USD).\n\nHinweis: Symbole werden beim Hinzufügen nicht live validiert, um API-Sperren zu vermeiden. Es kann nach der Einrichtung einige Minuten dauern, bis die ersten Daten erscheinen, da die Integration die Abfragen zeitversetzt im Hintergrund durchführt."
             }
         },
         "error": {

@@ -3,9 +3,9 @@
         "step": {
             "user": {
                 "data": {
-                    "symbols": "Ticker Symbols (comma separated, e.g., AAPL, MSFT, BTC-USD)"
+                    "symbols": "Ticker Symbols (comma separated)"
                 },
-                "description": "Enter the Yahoo Finance ticker symbols you want to monitor."
+                "description": "Enter the Yahoo Finance ticker symbols you want to monitor (e.g., AAPL, MSFT, BTC-USD). \n\nNote: Symbols are not validated live during setup to avoid rate limits. It may take a few minutes for data to appear while the integration performs its initial stealth fetch."
             }
         },
         "error": {
