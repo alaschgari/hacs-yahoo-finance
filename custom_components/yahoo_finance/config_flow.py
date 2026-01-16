@@ -4,6 +4,7 @@ from typing import Any
 
 import voluptuous as vol
 import yfinance as yf
+import requests
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
@@ -12,6 +13,8 @@ from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN, CONF_SYMBOLS
 
 _LOGGER = logging.getLogger(__name__)
+
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -28,15 +31,19 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     
     # Check if symbols are valid (at least one)
     valid_symbols = []
+    session = requests.Session()
+    session.headers.update({"User-Agent": USER_AGENT})
+
     for symbol in symbols:
-        ticker = yf.Ticker(symbol)
+        ticker = yf.Ticker(symbol, session=session)
         # Check if we can get some fast info to verify symbol
         try:
-            info = await hass.async_add_executor_job(lambda: ticker.info)
+            # fast_info is less likely to trigger 429 than .info
+            info = await hass.async_add_executor_job(lambda: ticker.fast_info)
             if info and "symbol" in info:
                 valid_symbols.append(symbol)
-        except Exception:
-            _LOGGER.warning("Could not validate symbol: %s", symbol)
+        except Exception as err:
+            _LOGGER.warning("Could not validate symbol %s: %s", symbol, err)
             continue
             
     if not valid_symbols:

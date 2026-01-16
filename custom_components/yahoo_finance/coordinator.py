@@ -3,11 +3,14 @@ from datetime import timedelta
 import logging
 
 import yfinance as yf
+import requests
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, DEFAULT_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
+
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
 class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Yahoo Finance data."""
@@ -26,12 +29,14 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from Yahoo Finance."""
         try:
             data = {}
+            session = requests.Session()
+            session.headers.update({"User-Agent": USER_AGENT})
+
             for symbol in self.symbols:
-                ticker = yf.Ticker(symbol)
-                # We use fast_info for basic data or info for everything
-                # Note: yfinance can be blocking, so we run it in executor if needed
-                # However, yfinance 0.2.x has some async capabilities or we can just use hass.async_add_executor_job
+                ticker = yf.Ticker(symbol, session=session)
+                # Using fast_info to get the most important data quickly
                 info = await self.hass.async_add_executor_job(lambda: ticker.info)
+                # If ticker.info still fails with 429, we might need a fallback or a more resilient approach
                 if info:
                     data[symbol] = info
             return data
