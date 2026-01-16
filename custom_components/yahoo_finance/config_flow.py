@@ -36,18 +36,19 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     for symbol in symbols:
         ticker = yf.Ticker(symbol, session=session)
-        # Check if we can get some fast info to verify symbol
         try:
-            # fast_info is less likely to trigger 429 than .info
+            # fast_info is a proxy object, we check if it has a currency to verify it's valid
             info = await hass.async_add_executor_job(lambda: ticker.fast_info)
-            if info and "symbol" in info:
+            if info and info.get("currency"):
                 valid_symbols.append(symbol)
+            else:
+                _LOGGER.warning("Symbol %s has no currency information, might be invalid", symbol)
         except Exception as err:
             _LOGGER.warning("Could not validate symbol %s: %s", symbol, err)
             continue
             
     if not valid_symbols:
-        raise vol.Invalid("No valid symbols found")
+        raise vol.Invalid("invalid_symbols")
 
     return {"title": ", ".join(valid_symbols), CONF_SYMBOLS: valid_symbols}
 
@@ -65,6 +66,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 info = await validate_input(self.hass, user_input)
                 return self.async_create_entry(title=info["title"], data=info)
+            except vol.Invalid as err:
+                _LOGGER.error("Validation error: %s", err)
+                errors["base"] = str(err)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
