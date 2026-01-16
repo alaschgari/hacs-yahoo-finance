@@ -25,7 +25,10 @@ async def async_setup_entry(
     
     entities = []
     for symbol in coordinator.symbols:
-        entities.append(YahooFinanceSensor(coordinator, symbol))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "price"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "change_pct"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "high"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "low"))
     
     async_add_entities(entities)
 
@@ -33,27 +36,55 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
     """Representation of a Yahoo Finance sensor."""
 
     _attr_has_entity_name = True
-    _attr_device_class = SensorDeviceClass.MONETARY
 
-    def __init__(self, coordinator, symbol):
+    def __init__(self, coordinator, symbol, sensor_type):
         """Initialize."""
         super().__init__(coordinator)
         self.symbol = symbol
-        self._attr_unique_id = f"{DOMAIN}_{symbol.lower()}"
-        self._attr_name = symbol
-        self.entity_id = f"sensor.{DOMAIN}_{symbol.lower()}"
+        self.sensor_type = sensor_type
+        self._attr_unique_id = f"{DOMAIN}_{symbol.lower()}_{sensor_type}"
+        
+        if sensor_type == "price":
+            self._attr_name = f"{symbol}"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+        elif sensor_type == "change_pct":
+            self._attr_name = f"{symbol} Change %"
+            self._attr_native_unit_of_measurement = "%"
+            self._attr_icon = "mdi:percent"
+        elif sensor_type == "high":
+            self._attr_name = f"{symbol} Day High"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:arrow-up-circle"
+        elif sensor_type == "low":
+            self._attr_name = f"{symbol} Day Low"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:arrow-down-circle"
+
+        self.entity_id = f"sensor.{DOMAIN}_{symbol.lower()}_{sensor_type}"
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if self.coordinator.data and self.symbol in self.coordinator.data:
-            data = self.coordinator.data[self.symbol]
-            return data.get("regularMarketPrice") or data.get("currentPrice")
+        if not self.coordinator.data or self.symbol not in self.coordinator.data:
+            return None
+        
+        data = self.coordinator.data[self.symbol]
+        if self.sensor_type == "price":
+            return data.get("regularMarketPrice")
+        elif self.sensor_type == "change_pct":
+            pct = data.get("regularMarketChangePercent")
+            return round(pct, 2) if pct is not None else None
+        elif self.sensor_type == "high":
+            return data.get("dayHigh")
+        elif self.sensor_type == "low":
+            return data.get("dayLow")
         return None
 
     @property
     def native_unit_of_measurement(self):
         """Return the unit of measurement."""
+        if self.sensor_type == "change_pct":
+            return "%"
         if self.coordinator.data and self.symbol in self.coordinator.data:
             return self.coordinator.data[self.symbol].get("currency")
         return None
