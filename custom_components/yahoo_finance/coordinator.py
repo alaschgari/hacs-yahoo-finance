@@ -34,9 +34,11 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
 
             for symbol in self.symbols:
                 ticker = yf.Ticker(symbol, session=session)
-                # Using fast_info to get the most important data quickly
-                info = await self.hass.async_add_executor_job(lambda: ticker.info)
-                # If ticker.info still fails with 429, we might need a fallback or a more resilient approach
+                # Ensure the entire .info dict is fetched within the executor
+                def fetch_info(t):
+                    return t.info
+
+                info = await self.hass.async_add_executor_job(fetch_info, ticker)
                 if info:
                     data[symbol] = info
             return data

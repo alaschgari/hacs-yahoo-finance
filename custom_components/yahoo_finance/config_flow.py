@@ -37,12 +37,22 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     for symbol in symbols:
         ticker = yf.Ticker(symbol, session=session)
         try:
-            # fast_info is a proxy object, we check if it has a currency to verify it's valid
-            info = await hass.async_add_executor_job(lambda: ticker.fast_info)
-            if info and info.get("currency"):
+            # Wrap BOTH the data fetch and the attribute check in the executor to avoid blocking the event loop
+            def check_validity(t):
+                # fast_info.get("currency") might trigger a network request internally
+                try:
+                    return t.fast_info.get("currency")
+                except Exception:
+                    # Fallback: check if we can get any history data
+                    hist = t.history(period="1d")
+                    return not hist.empty
+
+            is_valid = await hass.async_add_executor_job(check_validity, ticker)
+            
+            if is_valid:
                 valid_symbols.append(symbol)
             else:
-                _LOGGER.warning("Symbol %s has no currency information, might be invalid", symbol)
+                _LOGGER.warning("Symbol %s could not be validated", symbol)
         except Exception as err:
             _LOGGER.warning("Could not validate symbol %s: %s", symbol, err)
             continue
