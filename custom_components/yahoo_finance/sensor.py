@@ -16,7 +16,12 @@ from .const import (
     CONF_SYMBOLS, 
     CONF_SHOW_CHANGE_PCT, 
     CONF_SHOW_HIGH, 
-    CONF_SHOW_LOW
+    CONF_SHOW_LOW,
+    CONF_SHOW_MARKET_CAP,
+    CONF_SHOW_VOLUME,
+    CONF_SHOW_OPEN,
+    CONF_SHOW_52WK_HIGH,
+    CONF_SHOW_52WK_LOW
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +37,11 @@ async def async_setup_entry(
     show_change_pct = entry.data.get(CONF_SHOW_CHANGE_PCT, True)
     show_high = entry.data.get(CONF_SHOW_HIGH, True)
     show_low = entry.data.get(CONF_SHOW_LOW, True)
+    show_market_cap = entry.data.get(CONF_SHOW_MARKET_CAP, False)
+    show_volume = entry.data.get(CONF_SHOW_VOLUME, False)
+    show_open = entry.data.get(CONF_SHOW_OPEN, False)
+    show_52wk_high = entry.data.get(CONF_SHOW_52WK_HIGH, False)
+    show_52wk_low = entry.data.get(CONF_SHOW_52WK_LOW, False)
 
     entities = []
     for symbol in coordinator.symbols:
@@ -42,6 +52,16 @@ async def async_setup_entry(
             entities.append(YahooFinanceSensor(coordinator, symbol, "high"))
         if show_low:
             entities.append(YahooFinanceSensor(coordinator, symbol, "low"))
+        if show_market_cap:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "market_cap"))
+        if show_volume:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "volume"))
+        if show_open:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "open"))
+        if show_52wk_high:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "52wk_high"))
+        if show_52wk_low:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "52wk_low"))
     
     async_add_entities(entities)
 
@@ -72,6 +92,24 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             self._attr_name = f"{symbol} Day Low"
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_icon = "mdi:arrow-down-circle"
+        elif sensor_type == "market_cap":
+            self._attr_name = f"{symbol} Market Cap"
+            self._attr_icon = "mdi:chart-areaspline"
+        elif sensor_type == "volume":
+            self._attr_name = f"{symbol} Volume"
+            self._attr_icon = "mdi:chart-line"
+        elif sensor_type == "open":
+            self._attr_name = f"{symbol} Open"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:door-open"
+        elif sensor_type == "52wk_high":
+            self._attr_name = f"{symbol} 52-Week High"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:arrow-up-bold-circle-outline"
+        elif sensor_type == "52wk_low":
+            self._attr_name = f"{symbol} 52-Week Low"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:arrow-down-bold-circle-outline"
 
         self.entity_id = f"sensor.{DOMAIN}_{symbol.lower()}_{sensor_type}"
 
@@ -91,6 +129,16 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             return data.get("dayHigh")
         elif self.sensor_type == "low":
             return data.get("dayLow")
+        elif self.sensor_type == "market_cap":
+            return data.get("marketCap")
+        elif self.sensor_type == "volume":
+            return data.get("volume")
+        elif self.sensor_type == "open":
+            return data.get("open")
+        elif self.sensor_type == "52wk_high":
+            return data.get("yearHigh")
+        elif self.sensor_type == "52wk_low":
+            return data.get("yearLow")
         return None
 
     @property
@@ -110,8 +158,13 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             pct_change = info.get("regularMarketChangePercent")
             return {
                 "regularMarketChangePercent": round(pct_change, 2) if pct_change is not None else None,
-                "regularMarketDayHigh": info.get("dayHigh") or info.get("regularMarketDayHigh"),
-                "regularMarketDayLow": info.get("dayLow") or info.get("regularMarketDayLow"),
+                "regularMarketDayHigh": info.get("dayHigh"),
+                "regularMarketDayLow": info.get("dayLow"),
+                "marketCap": info.get("marketCap"),
+                "volume": info.get("volume"),
+                "open": info.get("open"),
+                "fiftyTwoWeekHigh": info.get("yearHigh"),
+                "fiftyTwoWeekLow": info.get("yearLow"),
                 "longName": info.get("longName"),
                 "shortName": info.get("shortName"),
             }

@@ -8,6 +8,11 @@ CONF_SYMBOLS = "symbols"
 CONF_SHOW_CHANGE_PCT = "show_change_pct"
 CONF_SHOW_HIGH = "show_high"
 CONF_SHOW_LOW = "show_low"
+CONF_SHOW_MARKET_CAP = "show_market_cap"
+CONF_SHOW_VOLUME = "show_volume"
+CONF_SHOW_OPEN = "show_open"
+CONF_SHOW_52WK_HIGH = "show_52wk_high"
+CONF_SHOW_52WK_LOW = "show_52wk_low"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

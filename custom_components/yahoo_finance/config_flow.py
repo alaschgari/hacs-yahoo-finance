@@ -27,6 +27,11 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SHOW_CHANGE_PCT, default=True): bool,
         vol.Optional(CONF_SHOW_HIGH, default=True): bool,
         vol.Optional(CONF_SHOW_LOW, default=True): bool,
+        vol.Optional(CONF_SHOW_MARKET_CAP, default=False): bool,
+        vol.Optional(CONF_SHOW_VOLUME, default=False): bool,
+        vol.Optional(CONF_SHOW_OPEN, default=False): bool,
+        vol.Optional(CONF_SHOW_52WK_HIGH, default=False): bool,
+        vol.Optional(CONF_SHOW_52WK_LOW, default=False): bool,
     }
 )
 
@@ -53,6 +58,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         CONF_SHOW_CHANGE_PCT: data.get(CONF_SHOW_CHANGE_PCT, True),
         CONF_SHOW_HIGH: data.get(CONF_SHOW_HIGH, True),
         CONF_SHOW_LOW: data.get(CONF_SHOW_LOW, True),
+        CONF_SHOW_MARKET_CAP: data.get(CONF_SHOW_MARKET_CAP, False),
+        CONF_SHOW_VOLUME: data.get(CONF_SHOW_VOLUME, False),
+        CONF_SHOW_OPEN: data.get(CONF_SHOW_OPEN, False),
+        CONF_SHOW_52WK_HIGH: data.get(CONF_SHOW_52WK_HIGH, False),
+        CONF_SHOW_52WK_LOW: data.get(CONF_SHOW_52WK_LOW, False),
     }
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

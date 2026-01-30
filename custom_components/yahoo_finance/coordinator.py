@@ -73,6 +73,11 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                             "regularMarketChangePercent": (price - prev_close) / prev_close * 100 if price and prev_close else 0,
                             "dayHigh": info.day_high,
                             "dayLow": info.day_low,
+                            "marketCap": info.market_cap,
+                            "volume": info.last_volume,
+                            "open": info.open,
+                            "yearHigh": info.year_high,
+                            "yearLow": info.year_low,
                             "symbol": symbol,
                             # fast_info doesn't always have long/short name, fallback to symbol
                             "longName": symbol, 
