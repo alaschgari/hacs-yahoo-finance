@@ -8,7 +8,7 @@ import asyncio
 import random
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, get_headers
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_UPDATE_INTERVAL, get_headers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
+        self._last_update_success_time = 0
 
     async def _async_update_data(self):
         """Fetch data from Yahoo Finance."""
@@ -36,6 +37,12 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
         # Check if we are in cooldown
         if asyncio.get_event_loop().time() < _LAST_429_TIME + _COOLDOWN_DURATION:
             _LOGGER.info("Skipping update due to recent 429 rate limit (cooling down)")
+            return self.data if self.data else {}
+
+        # Check for minimum update interval to prevent spamming
+        now = asyncio.get_event_loop().time()
+        if now < self._last_update_success_time + MIN_UPDATE_INTERVAL:
+            _LOGGER.debug("Skipping update due to minimum interval limit (throttling)")
             return self.data if self.data else {}
 
         def fetch_batch(symbols):
@@ -100,6 +107,7 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
             # Merge with existing data to keep historical values if some symbols are missing in this batch
             new_data = self.data.copy() if self.data else {}
             new_data.update(result)
+            self._last_update_success_time = asyncio.get_event_loop().time()
             return new_data
         
         if not self.data:

@@ -1,7 +1,8 @@
 """Constants for the Yahoo Finance integration."""
 
 DOMAIN = "yahoo_finance"
-DEFAULT_SCAN_INTERVAL = 3600  # 1 hour
+DEFAULT_SCAN_INTERVAL = 30
+MIN_UPDATE_INTERVAL = 10
 
 CONF_SYMBOLS = "symbols"
 CONF_SHOW_CHANGE_PCT = "show_change_pct"
