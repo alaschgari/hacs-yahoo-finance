@@ -9,7 +9,7 @@ import asyncio
 import random
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_UPDATE_INTERVAL, get_headers
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_UPDATE_INTERVAL, CONF_SCAN_INTERVAL, CONF_ECO_THRESHOLD, get_headers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,17 +20,19 @@ _COOLDOWN_DURATION = 300  # 5 minutes
 class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Yahoo Finance data."""
 
-    def __init__(self, hass, symbol_definitions):
+    def __init__(self, hass, symbol_definitions, scan_interval=DEFAULT_SCAN_INTERVAL, eco_threshold=600):
         """Initialize."""
         self.symbol_definitions = symbol_definitions
         self.symbols = list(symbol_definitions.keys())
+        self.scan_interval = scan_interval
+        self.eco_threshold = eco_threshold
         self._slow_update_interval = 21600  # 6 hours
         self._last_slow_update = 0
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=timedelta(seconds=scan_interval),
         )
         self._last_update_success_time = 0
 
@@ -54,11 +56,11 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
         
         current_threshold = MIN_UPDATE_INTERVAL
         if is_weekend or is_night:
-            # In Eco-mode, we only allow updates every 10 minutes
-            current_threshold = 600
+            # Use configured eco-threshold
+            current_threshold = self.eco_threshold
             
         if now < self._last_update_success_time + current_threshold:
-             _LOGGER.debug("Skipping update due to %s interval limit", "Eco-Mode" if current_threshold > 600 else "minimum")
+             _LOGGER.debug("Skipping update due to %s interval limit (%ss)", "Eco-Mode" if current_threshold >= self.eco_threshold else "minimum", current_threshold)
              return self.data if self.data else {}
 
         # Determine if we should fetch slow data (earnings, etc.)

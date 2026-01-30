@@ -25,6 +25,8 @@ from .const import (
     CONF_SHOW_EARNINGS,
     CONF_SHOW_PE,
     CONF_SHOW_TREND,
+    CONF_SCAN_INTERVAL,
+    CONF_ECO_THRESHOLD,
     get_headers
 )
 
@@ -45,6 +47,8 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SHOW_EARNINGS, default=False): bool,
         vol.Optional(CONF_SHOW_PE, default=False): bool,
         vol.Optional(CONF_SHOW_TREND, default=False): bool,
+        vol.Optional(CONF_SCAN_INTERVAL, default=120): vol.All(vol.Coerce(int), vol.Range(min=30)),
+        vol.Optional(CONF_ECO_THRESHOLD, default=600): vol.All(vol.Coerce(int), vol.Range(min=60)),
     }
 )
 
@@ -92,6 +96,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         CONF_SHOW_EARNINGS: data.get(CONF_SHOW_EARNINGS, False),
         CONF_SHOW_PE: data.get(CONF_SHOW_PE, False),
         CONF_SHOW_TREND: data.get(CONF_SHOW_TREND, False),
+        CONF_SCAN_INTERVAL: data.get(CONF_SCAN_INTERVAL, 120),
+        CONF_ECO_THRESHOLD: data.get(CONF_ECO_THRESHOLD, 600),
     }
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -247,6 +253,20 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         self.config_entry.data.get(CONF_SHOW_TREND, False)
                     )
                 ): bool,
+                vol.Optional(
+                    CONF_SCAN_INTERVAL, 
+                    default=self.config_entry.options.get(
+                        CONF_SCAN_INTERVAL, 
+                        self.config_entry.data.get(CONF_SCAN_INTERVAL, 120)
+                    )
+                ): vol.All(vol.Coerce(int), vol.Range(min=30)),
+                vol.Optional(
+                    CONF_ECO_THRESHOLD, 
+                    default=self.config_entry.options.get(
+                        CONF_ECO_THRESHOLD, 
+                        self.config_entry.data.get(CONF_ECO_THRESHOLD, 600)
+                    )
+                ): vol.All(vol.Coerce(int), vol.Range(min=60)),
             }
         )
 

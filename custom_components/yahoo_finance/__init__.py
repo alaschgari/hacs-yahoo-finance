@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, CONF_SYMBOLS
+from .const import DOMAIN, CONF_SYMBOLS, CONF_SCAN_INTERVAL, CONF_ECO_THRESHOLD
 from .coordinator import YahooFinanceDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -14,10 +14,13 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Yahoo Finance from a config entry."""
-    # Use options if available, otherwise data
-    symbols = entry.options.get(CONF_SYMBOLS, entry.data.get(CONF_SYMBOLS, {}))
+    # Prioritize options over data
+    conf = {**entry.data, **entry.options}
+    symbols = conf.get(CONF_SYMBOLS, {})
+    scan_interval = conf.get(CONF_SCAN_INTERVAL, 120)
+    eco_threshold = conf.get(CONF_ECO_THRESHOLD, 600)
     
-    coordinator = YahooFinanceDataUpdateCoordinator(hass, symbols)
+    coordinator = YahooFinanceDataUpdateCoordinator(hass, symbols, scan_interval, eco_threshold)
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator

@@ -15,9 +15,11 @@
                     "show_dividend": "Dividenden-Info anzeigen",
                     "show_earnings": "Earnings-Datum anzeigen",
                     "show_pe": "KGV (P/E Ratio) anzeigen",
-                    "show_trend": "Trend-Indikatoren anzeigen"
+                    "show_trend": "Trend-Indikatoren anzeigen",
+                    "scan_interval": "Update-Intervall (Sekunden)",
+                    "eco_threshold": "Eco-Modus Intervall (Sekunden)"
                 },
-                "description": "Gib die Yahoo Finance Ticker-Symbole ein, die du überwachen möchtest (z. B. AAPL, MSFT, BTC-USD).\n\n**Portfolio-Unterstützung:** Du kannst eine Menge nach einem Doppelpunkt eingeben, um deinen Portfolio-Wert zu verfolgen (z. B. AAPL:10, MSFT:5.5).\n\nHinweis: Symbole werden beim Hinzufügen nicht live validiert, um API-Sperren zu vermeiden."
+                "description": "Gib Ticker-Symbole ein (z.B. AAPL). Nutze **SYMBOL:MENGE** (z.B. AAPL:10) für das Portfolio-Tracking. \n\n**Update-Intervall:** Wie oft Daten während der Marktzeiten geladen werden (min 30s).\n**Eco-Modus:** Intervall für Nächte und Wochenenden, um API-Sperren zu vermeiden."
             }
         },
         "error": {

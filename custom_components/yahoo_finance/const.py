@@ -17,6 +17,8 @@ CONF_SHOW_DIVIDEND = "show_dividend"
 CONF_SHOW_EARNINGS = "show_earnings"
 CONF_SHOW_PE = "show_pe"
 CONF_SHOW_TREND = "show_trend"
+CONF_SCAN_INTERVAL = "scan_interval"
+CONF_ECO_THRESHOLD = "eco_threshold"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
