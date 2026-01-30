@@ -13,7 +13,7 @@
                     "show_52wk_high": "52-Wochen-Hoch anzeigen",
                     "show_52wk_low": "52-Wochen-Tief anzeigen"
                 },
-                "description": "Gib die Yahoo Finance Ticker-Symbole ein, die du überwachen möchtest (z. B. AAPL, MSFT, BTC-USD).\n\nHinweis: Symbole werden beim Hinzufügen nicht live validiert, um API-Sperren zu vermeiden. Es kann nach der Einrichtung einige Minuten dauern, bis die ersten Daten erscheinen, da die Integration die Abfragen zeitversetzt im Hintergrund durchführt."
+                "description": "Gib die Yahoo Finance Ticker-Symbole ein, die du überwachen möchtest (z. B. AAPL, MSFT, BTC-USD).\n\n**Portfolio-Unterstützung:** Du kannst eine Menge nach einem Doppelpunkt eingeben, um deinen Portfolio-Wert zu verfolgen (z. B. AAPL:10, MSFT:5.5).\n\nHinweis: Symbole werden beim Hinzufügen nicht live validiert, um API-Sperren zu vermeiden."
             }
         },
         "error": {

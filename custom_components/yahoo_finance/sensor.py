@@ -62,6 +62,23 @@ async def async_setup_entry(
             entities.append(YahooFinanceSensor(coordinator, symbol, "52wk_high"))
         if show_52wk_low:
             entities.append(YahooFinanceSensor(coordinator, symbol, "52wk_low"))
+            
+        # Portfolio value sensor (only if amount > 0)
+        amount = coordinator.symbol_definitions.get(symbol, 0)
+        if amount > 0:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "total_value"))
+            entities.append(YahooFinanceSensor(coordinator, symbol, "portfolio_weight"))
+            
+        # Extended data sensors (always created if data exists later)
+        entities.append(YahooFinanceSensor(coordinator, symbol, "dividend_yield"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "next_earnings"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "pe_ratio"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "fifty_day_avg"))
+        entities.append(YahooFinanceSensor(coordinator, symbol, "two_hundred_day_avg"))
+            
+    # Total Portfolio sensor
+    if any(amt > 0 for amt in coordinator.symbol_definitions.values()):
+        entities.append(YahooFinanceSensor(coordinator, "__portfolio__", "total_portfolio_value"))
     
     async_add_entities(entities)
 
@@ -110,8 +127,42 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             self._attr_name = f"{symbol} 52-Week Low"
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_icon = "mdi:arrow-down-bold-circle-outline"
+        elif sensor_type == "total_value":
+            self._attr_name = f"{symbol} Holding Value"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:wallet"
+        elif sensor_type == "portfolio_weight":
+            self._attr_name = f"{symbol} Portfolio Weight"
+            self._attr_native_unit_of_measurement = "%"
+            self._attr_icon = "mdi:chart-pie"
+        elif sensor_type == "dividend_yield":
+            self._attr_name = f"{symbol} Dividend Yield"
+            self._attr_native_unit_of_measurement = "%"
+            self._attr_icon = "mdi:cash-dividend"
+        elif sensor_type == "next_earnings":
+            self._attr_name = f"{symbol} Next Earnings"
+            self._attr_device_class = SensorDeviceClass.DATE
+            self._attr_icon = "mdi:calendar-star"
+        elif sensor_type == "pe_ratio":
+            self._attr_name = f"{symbol} P/E Ratio"
+            self._attr_icon = "mdi:chart-shave"
+        elif sensor_type == "fifty_day_avg":
+            self._attr_name = f"{symbol} 50-Day Average"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:chart-bell-curve-cumulative"
+        elif sensor_type == "two_hundred_day_avg":
+            self._attr_name = f"{symbol} 200-Day Average"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:chart-bell-curve"
+        elif sensor_type == "total_portfolio_value":
+            self._attr_name = "Portfolio Total Value"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_icon = "mdi:bank"
 
-        self.entity_id = f"sensor.{DOMAIN}_{symbol.lower()}_{sensor_type}"
+        if symbol == "__portfolio__":
+             self.entity_id = f"sensor.{DOMAIN}_total_portfolio_value"
+        else:
+             self.entity_id = f"sensor.{DOMAIN}_{symbol.lower()}_{sensor_type}"
 
     @property
     def native_value(self):
@@ -139,6 +190,24 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             return data.get("yearHigh")
         elif self.sensor_type == "52wk_low":
             return data.get("yearLow")
+        elif self.sensor_type == "total_value":
+            return data.get("total_value")
+        elif self.sensor_type == "portfolio_weight":
+            return round(data.get("portfolio_weight", 0), 2)
+        elif self.sensor_type == "dividend_yield":
+            val = data.get("dividendYield")
+            return round(val * 100, 2) if val is not None else None
+        elif self.sensor_type == "next_earnings":
+            return data.get("nextEarningsDate")
+        elif self.sensor_type == "pe_ratio":
+            val = data.get("forwardPE") or data.get("trailingPE")
+            return round(val, 2) if val is not None else None
+        elif self.sensor_type == "fifty_day_avg":
+            return data.get("fiftyDayAverage")
+        elif self.sensor_type == "two_hundred_day_avg":
+            return data.get("twoHundredDayAverage")
+        elif self.sensor_type == "total_portfolio_value":
+             return self.coordinator.data.get("__portfolio__", {}).get("total_value")
         return None
 
     @property
@@ -167,5 +236,9 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
                 "fiftyTwoWeekLow": info.get("yearLow"),
                 "longName": info.get("longName"),
                 "shortName": info.get("shortName"),
+                "news": info.get("news"),
+                "dividendYield": info.get("dividendYield"),
+                "exDividendDate": info.get("exDividendDate"),
+                "nextEarningsDate": info.get("nextEarningsDate"),
             }
         return {}

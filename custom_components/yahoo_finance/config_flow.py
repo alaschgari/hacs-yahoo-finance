@@ -40,21 +40,35 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    symbols = [s.strip().upper() for s in data[CONF_SYMBOLS].split(",")]
+    raw_symbols = [s.strip().upper() for s in data[CONF_SYMBOLS].split(",")]
     
     # We disable API validation here to avoid 429/Blocking calls during setup
     # Just check if the symbols look like valid ticker symbols
-    valid_symbols = []
-    for symbol in symbols:
-        if symbol and all(c.isalnum() or c in "-.=_" for c in symbol):
-            valid_symbols.append(symbol)
+    # Support format SYMBOL:AMOUNT (e.g. AAPL:10)
+    symbol_definitions = {}
+    for entry in raw_symbols:
+        if not entry:
+            continue
             
-    if not valid_symbols:
+        parts = entry.split(":")
+        symbol = parts[0].strip()
+        amount = 0.0
+        
+        if len(parts) > 1:
+            try:
+                amount = float(parts[1].strip())
+            except ValueError:
+                 _LOGGER.warning("Invalid amount for symbol %s: %s", symbol, parts[1])
+        
+        if symbol and all(c.isalnum() or c in "-.=_" for c in symbol):
+            symbol_definitions[symbol] = amount
+            
+    if not symbol_definitions:
         raise vol.Invalid("invalid_symbols")
 
     return {
-        "title": ", ".join(valid_symbols), 
-        CONF_SYMBOLS: valid_symbols,
+        "title": ", ".join(symbol_definitions.keys()), 
+        CONF_SYMBOLS: symbol_definitions,
         CONF_SHOW_CHANGE_PCT: data.get(CONF_SHOW_CHANGE_PCT, True),
         CONF_SHOW_HIGH: data.get(CONF_SHOW_HIGH, True),
         CONF_SHOW_LOW: data.get(CONF_SHOW_LOW, True),

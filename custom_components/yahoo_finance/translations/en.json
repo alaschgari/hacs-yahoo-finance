@@ -13,7 +13,7 @@
                     "show_52wk_high": "Show 52-Week High",
                     "show_52wk_low": "Show 52-Week Low"
                 },
-                "description": "Enter the Yahoo Finance ticker symbols you want to monitor (e.g., AAPL, MSFT, BTC-USD). \n\nNote: Symbols are not validated live during setup to avoid rate limits. It may take a few minutes for data to appear while the integration performs its initial stealth fetch."
+                "description": "Enter the Yahoo Finance ticker symbols you want to monitor (e.g., AAPL, MSFT, BTC-USD). \n\n**Portfolio Support:** You can enter an amount after a colon to track your portfolio value (e.g., AAPL:10, MSFT:5.5).\n\nNote: Symbols are not validated live during setup to avoid rate limits."
             }
         },
         "error": {
