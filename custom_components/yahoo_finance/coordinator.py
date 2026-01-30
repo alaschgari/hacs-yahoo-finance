@@ -46,47 +46,42 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
             return self.data if self.data else {}
 
         def fetch_batch(symbols):
-            symbols_str = ",".join(symbols)
-            # Spark endpoint allows batch fetching multiple symbols at once
-            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols_str}&range=1d&interval=1d"
-            headers = get_headers()
             try:
-                response = requests.get(url, headers=headers, timeout=15)
-                
-                if response.status_code == 429:
-                    return "429"
-                    
-                response.raise_for_status()
-                content = response.json()
+                # yfinance allows fetching multiple tickers at once
+                # The Tickers object handles thread-safe data fetching
+                tickers = yf.Tickers(" ".join(symbols))
                 
                 batch_data = {}
-                if "spark" in content and "result" in content["spark"]:
-                    for entry in content["spark"]["result"]:
-                        symbol = entry.get("symbol")
-                        if not symbol or not entry.get("response"):
-                            continue
-                            
-                        # Response is usually a list with one item metadata
-                        resp_item = entry["response"][0]
-                        meta = resp_item.get("meta")
-                        if not meta:
-                            continue
-                            
-                        price = meta.get("regularMarketPrice")
-                        prev_close = meta.get("chartPreviousClose")
-                        high = meta.get("regularMarketDayHigh") or price
-                        low = meta.get("regularMarketDayLow") or price
+                for symbol in symbols:
+                    # Accessing the ticker object from the Tickers container
+                    ticker = tickers.tickers.get(symbol)
+                    if not ticker:
+                        continue
+                        
+                    # fast_info provides the data we need without downloading history
+                    info = ticker.fast_info
+                    if not info:
+                        continue
+                    
+                    try:
+                        price = info.last_price
+                        prev_close = info.previous_close
                         
                         batch_data[symbol] = {
                             "regularMarketPrice": price,
-                            "currency": meta.get("currency"),
+                            "currency": info.currency,
                             "regularMarketChangePercent": (price - prev_close) / prev_close * 100 if price and prev_close else 0,
-                            "dayHigh": high,
-                            "dayLow": low,
+                            "dayHigh": info.day_high,
+                            "dayLow": info.day_low,
                             "symbol": symbol,
-                            "longName": meta.get("longName") or symbol,
-                            "shortName": meta.get("shortName") or symbol,
+                            # fast_info doesn't always have long/short name, fallback to symbol
+                            "longName": symbol, 
+                            "shortName": symbol,
                         }
+                    except Exception as e:
+                        _LOGGER.debug("Error extracting data for %s: %s", symbol, e)
+                        continue
+                        
                 return batch_data
             except Exception as ex:
                 _LOGGER.warning("Batch fetch failed: %s", ex)
