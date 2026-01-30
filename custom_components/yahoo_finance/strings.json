@@ -11,7 +11,11 @@
                     "show_volume": "Show Volume",
                     "show_open": "Show Open",
                     "show_52wk_high": "Show 52-Week High",
-                    "show_52wk_low": "Show 52-Week Low"
+                    "show_52wk_low": "Show 52-Week Low",
+                    "show_dividend": "Show Dividend Info",
+                    "show_earnings": "Show Earnings Date",
+                    "show_pe": "Show P/E Ratio",
+                    "show_trend": "Show Trend Indicators (Averages)"
                 },
                 "description": "Enter the Yahoo Finance ticker symbols you want to monitor (e.g., AAPL, MSFT, BTC-USD). \n\n**Portfolio Support:** You can enter an amount after a colon to track your portfolio value (e.g., AAPL:10, MSFT:5.5).\n\nNote: Symbols are not validated live during setup to avoid rate limits."
             }

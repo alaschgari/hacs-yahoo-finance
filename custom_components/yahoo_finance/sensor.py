@@ -21,10 +21,12 @@ from .const import (
     CONF_SHOW_VOLUME,
     CONF_SHOW_OPEN,
     CONF_SHOW_52WK_HIGH,
-    CONF_SHOW_52WK_LOW
+    CONF_SHOW_52WK_LOW,
+    CONF_SHOW_DIVIDEND,
+    CONF_SHOW_EARNINGS,
+    CONF_SHOW_PE,
+    CONF_SHOW_TREND
 )
-
-_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -42,6 +44,10 @@ async def async_setup_entry(
     show_open = entry.data.get(CONF_SHOW_OPEN, False)
     show_52wk_high = entry.data.get(CONF_SHOW_52WK_HIGH, False)
     show_52wk_low = entry.data.get(CONF_SHOW_52WK_LOW, False)
+    show_dividend = entry.data.get(CONF_SHOW_DIVIDEND, False)
+    show_earnings = entry.data.get(CONF_SHOW_EARNINGS, False)
+    show_pe = entry.data.get(CONF_SHOW_PE, False)
+    show_trend = entry.data.get(CONF_SHOW_TREND, False)
 
     entities = []
     for symbol in coordinator.symbols:
@@ -69,12 +75,16 @@ async def async_setup_entry(
             entities.append(YahooFinanceSensor(coordinator, symbol, "total_value"))
             entities.append(YahooFinanceSensor(coordinator, symbol, "portfolio_weight"))
             
-        # Extended data sensors (always created if data exists later)
-        entities.append(YahooFinanceSensor(coordinator, symbol, "dividend_yield"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "next_earnings"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "pe_ratio"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "fifty_day_avg"))
-        entities.append(YahooFinanceSensor(coordinator, symbol, "two_hundred_day_avg"))
+        # Extended data sensors (only if enabled)
+        if show_dividend:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "dividend_yield"))
+        if show_earnings:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "next_earnings"))
+        if show_pe:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "pe_ratio"))
+        if show_trend:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "fifty_day_avg"))
+            entities.append(YahooFinanceSensor(coordinator, symbol, "two_hundred_day_avg"))
             
     # Total Portfolio sensor
     if any(amt > 0 for amt in coordinator.symbol_definitions.values()):

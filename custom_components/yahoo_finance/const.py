@@ -13,6 +13,10 @@ CONF_SHOW_VOLUME = "show_volume"
 CONF_SHOW_OPEN = "show_open"
 CONF_SHOW_52WK_HIGH = "show_52wk_high"
 CONF_SHOW_52WK_LOW = "show_52wk_low"
+CONF_SHOW_DIVIDEND = "show_dividend"
+CONF_SHOW_EARNINGS = "show_earnings"
+CONF_SHOW_PE = "show_pe"
+CONF_SHOW_TREND = "show_trend"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
