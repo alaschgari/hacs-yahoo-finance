@@ -6,7 +6,12 @@
                     "symbols": "Ticker-Symbole (kommagetrennt)",
                     "show_change_pct": "Marktänderung in Prozent anzeigen",
                     "show_high": "Tageshoch anzeigen",
-                    "show_low": "Tagestief anzeigen"
+                    "show_low": "Tagestief anzeigen",
+                    "show_market_cap": "Marktkapitalisierung anzeigen",
+                    "show_volume": "Volumen anzeigen",
+                    "show_open": "Eröffnungskurs anzeigen",
+                    "show_52wk_high": "52-Wochen-Hoch anzeigen",
+                    "show_52wk_low": "52-Wochen-Tief anzeigen"
                 },
                 "description": "Gib die Yahoo Finance Ticker-Symbole ein, die du überwachen möchtest (z. B. AAPL, MSFT, BTC-USD).\n\nHinweis: Symbole werden beim Hinzufügen nicht live validiert, um API-Sperren zu vermeiden. Es kann nach der Einrichtung einige Minuten dauern, bis die ersten Daten erscheinen, da die Integration die Abfragen zeitversetzt im Hintergrund durchführt."
             }
