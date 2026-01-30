@@ -1,12 +1,10 @@
 # Yahoo Finance Integration for Home Assistant
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/alaschgari/hacs-yahoo-finance/main/logo.png" alt="Yahoo Finance Logo" width="200" height="200">
+  <img src="https://raw.githubusercontent.com/alaschgari/hacs-yahoo-finance/main/logo.png" alt="Yahoo Finance Logo" width="150">
 </p>
 
-> [!WARNING]
-> **Active Development / Alpha State**
-> This integration is currently in active development. Yahoo Finance has significantly tightened its API protections, leading to frequent "429 Too Many Requests" errors. It is highly likely that this integration will NOT work reliably for you at this moment. We are working on stealth methods to bypass these limitations.
+This integration provides a robust way to track stock prices, currencies, and technical indicators. Now with full **Portfolio Tracking** and **Smart Polling** support.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-orange.svg)](https://www.buymeacoffee.com/alaschgari)
@@ -14,11 +12,14 @@
 This custom integration for Home Assistant allows you to track stock prices, currencies, and other financial data using the Yahoo Finance API via the `yfinance` library.
  
 ## Features
-- Real-time (market) price tracking.
-- Percent change sensors.
-- Day High and Day Low attributes.
-- Support for various assets (Stocks, ETFs, Crypto, Currencies).
-- Easy configuration via Home Assistant UI.
+- **Portfolio Tracking:** Track holding values and total portfolio wealth (`SYMBOL:AMOUNT`).
+- **Smart Polling (Eco-Mode):** Automatic interval adjustment for nights and weekends to avoid API bans.
+- **Technical Indicators:** 50-day and 200-day moving averages.
+- **Extended Data:** Dividend yields, Next Earnings dates, and News headlines.
+- **Diversification:** Calculation of portfolio weights per position.
+- **Reliability:** Powered by `yfinance` with automatic session & crumb management.
+- **Localization:** Fully translated into English and German.
+- **Easy Config:** Setup via UI with toggleable sensor types.
 
 ## Installation via HACS
 1. Open HACS in your Home Assistant instance.
