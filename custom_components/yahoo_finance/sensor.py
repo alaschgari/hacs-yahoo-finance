@@ -267,7 +267,7 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             return "%"
         
         # These sensors do not have units
-        if self.sensor_type in ["next_earnings", "volume", "pe_ratio"]:
+        if self.sensor_type in ["next_earnings", "volume", "pe_ratio", "market_status", "esg_score", "beta"]:
              return None
 
         if self.coordinator.data and self.symbol in self.coordinator.data:
