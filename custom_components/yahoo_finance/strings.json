@@ -16,10 +16,15 @@
                     "show_earnings": "Show Earnings Date",
                     "show_pe": "Show P/E Ratio",
                     "show_trend": "Show Trend Indicators (Averages)",
+                    "show_esg": "Show ESG Scores",
+                    "show_performance": "Show Performance (YTD, 1M, 1Y)",
+                    "show_market_status": "Show Market Status Sensor",
+                    "ext_hours": "Enable Pre/Post Market Prices",
+                    "base_currency": "Portfolio Base Currency",
                     "scan_interval": "Update Interval (Seconds)",
                     "eco_threshold": "Eco-Mode Interval (Seconds)"
                 },
-                "description": "Enter ticker symbols (e.g., AAPL). Use **SYMBOL:AMOUNT** (e.g., AAPL:10) for portfolio tracking. \n\n**Update Interval:** How often data is fetched during market hours (min 30s).\n**Eco-Mode:** Threshold used during nights and weekends to avoid rate limits."
+                "description": "Configure your Pro Trading integration. Use **SYMBOL:AMOUNT** for portfolio tracking. \n\n**Base Currency:** Portfolio totals will be converted to this currency.\n**Extended Hours:** If enabled, fetches pre- and post-market pricing."
             }
         },
         "error": {

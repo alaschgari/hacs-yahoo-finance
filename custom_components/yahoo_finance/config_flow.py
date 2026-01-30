@@ -27,6 +27,11 @@ from .const import (
     CONF_SHOW_TREND,
     CONF_SCAN_INTERVAL,
     CONF_ECO_THRESHOLD,
+    CONF_BASE_CURRENCY,
+    CONF_EXT_HOURS,
+    CONF_SHOW_ESG,
+    CONF_SHOW_PERFORMANCE,
+    CONF_SHOW_MARKET_STATUS,
     get_headers
 )
 
@@ -47,6 +52,11 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SHOW_EARNINGS, default=False): bool,
         vol.Optional(CONF_SHOW_PE, default=False): bool,
         vol.Optional(CONF_SHOW_TREND, default=False): bool,
+        vol.Optional(CONF_SHOW_ESG, default=False): bool,
+        vol.Optional(CONF_SHOW_PERFORMANCE, default=False): bool,
+        vol.Optional(CONF_SHOW_MARKET_STATUS, default=False): bool,
+        vol.Optional(CONF_EXT_HOURS, default=False): bool,
+        vol.Optional(CONF_BASE_CURRENCY, default="USD"): vol.In(["USD", "EUR", "CHF", "GBP", "JPY", "CAD", "AUD"]),
         vol.Optional(CONF_SCAN_INTERVAL, default=120): vol.All(vol.Coerce(int), vol.Range(min=30)),
         vol.Optional(CONF_ECO_THRESHOLD, default=600): vol.All(vol.Coerce(int), vol.Range(min=60)),
     }
@@ -96,6 +106,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         CONF_SHOW_EARNINGS: data.get(CONF_SHOW_EARNINGS, False),
         CONF_SHOW_PE: data.get(CONF_SHOW_PE, False),
         CONF_SHOW_TREND: data.get(CONF_SHOW_TREND, False),
+        CONF_SHOW_ESG: data.get(CONF_SHOW_ESG, False),
+        CONF_SHOW_PERFORMANCE: data.get(CONF_SHOW_PERFORMANCE, False),
+        CONF_SHOW_MARKET_STATUS: data.get(CONF_SHOW_MARKET_STATUS, False),
+        CONF_EXT_HOURS: data.get(CONF_EXT_HOURS, False),
+        CONF_BASE_CURRENCY: data.get(CONF_BASE_CURRENCY, "USD"),
         CONF_SCAN_INTERVAL: data.get(CONF_SCAN_INTERVAL, 120),
         CONF_ECO_THRESHOLD: data.get(CONF_ECO_THRESHOLD, 600),
     }
@@ -253,6 +268,41 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         self.config_entry.data.get(CONF_SHOW_TREND, False)
                     )
                 ): bool,
+                vol.Optional(
+                    CONF_SHOW_ESG, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_ESG, 
+                        self.config_entry.data.get(CONF_SHOW_ESG, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_PERFORMANCE, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_PERFORMANCE, 
+                        self.config_entry.data.get(CONF_SHOW_PERFORMANCE, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_MARKET_STATUS, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_MARKET_STATUS, 
+                        self.config_entry.data.get(CONF_SHOW_MARKET_STATUS, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_EXT_HOURS, 
+                    default=self.config_entry.options.get(
+                        CONF_EXT_HOURS, 
+                        self.config_entry.data.get(CONF_EXT_HOURS, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_BASE_CURRENCY, 
+                    default=self.config_entry.options.get(
+                        CONF_BASE_CURRENCY, 
+                        self.config_entry.data.get(CONF_BASE_CURRENCY, "USD")
+                    )
+                ): vol.In(["USD", "EUR", "CHF", "GBP", "JPY", "CAD", "AUD"]),
                 vol.Optional(
                     CONF_SCAN_INTERVAL, 
                     default=self.config_entry.options.get(

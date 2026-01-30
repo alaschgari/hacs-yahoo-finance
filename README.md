@@ -12,14 +12,16 @@ This integration provides a robust way to track stock prices, currencies, and te
 This custom integration for Home Assistant allows you to track stock prices, currencies, and other financial data using the Yahoo Finance API via the `yfinance` library.
  
 ## Features
-- **Portfolio Tracking:** Track holding values and total portfolio wealth (`SYMBOL:AMOUNT`).
+- **Pro Portfolio Tracking:** Track holding values across multiple currencies with automatic conversion to your base currency (EUR, USD, etc.).
 - **Smart Polling (Eco-Mode):** Automatic interval adjustment for nights and weekends to avoid API bans.
+- **Market Insights:** Real-time **Market Status** (Open/Closed/Extended) and **Extended Hours** (Pre/Post market) pricing support.
 - **Technical Indicators:** 50-day and 200-day moving averages.
-- **Extended Data:** Dividend yields, Next Earnings dates, and News headlines.
+- **Professional Metrics:** **ESG Scores** (Environmental, Social, Governance), **Beta Factor**, and **YTD Performance**.
+- **Dividend Intel:** Yields, Next Earnings dates, and Historical dividend rates.
 - **Diversification:** Calculation of portfolio weights per position.
 - **Reliability:** Powered by `yfinance` with automatic session & crumb management.
 - **Localization:** Fully translated into English and German.
-- **Easy Config:** Setup via UI with toggleable sensor types.
+- **Easy Config:** Professional UI-based setup with toggleable Pro features and custom intervals.
 
 ## Installation via HACS
 1. Open HACS in your Home Assistant instance.

@@ -25,7 +25,10 @@ from .const import (
     CONF_SHOW_DIVIDEND,
     CONF_SHOW_EARNINGS,
     CONF_SHOW_PE,
-    CONF_SHOW_TREND
+    CONF_SHOW_TREND,
+    CONF_SHOW_ESG,
+    CONF_SHOW_PERFORMANCE,
+    CONF_SHOW_MARKET_STATUS
 )
 
 async def async_setup_entry(
@@ -51,6 +54,9 @@ async def async_setup_entry(
     show_earnings = conf.get(CONF_SHOW_EARNINGS, False)
     show_pe = conf.get(CONF_SHOW_PE, False)
     show_trend = conf.get(CONF_SHOW_TREND, False)
+    show_esg = conf.get(CONF_SHOW_ESG, False)
+    show_performance = conf.get(CONF_SHOW_PERFORMANCE, False)
+    show_market_status = conf.get(CONF_SHOW_MARKET_STATUS, False)
 
     entities = []
     for symbol in coordinator.symbols:
@@ -88,6 +94,14 @@ async def async_setup_entry(
         if show_trend:
             entities.append(YahooFinanceSensor(coordinator, symbol, "fifty_day_avg"))
             entities.append(YahooFinanceSensor(coordinator, symbol, "two_hundred_day_avg"))
+        if show_esg:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "esg_score"))
+        if show_performance:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "ytd_return"))
+        if show_market_status:
+            entities.append(YahooFinanceSensor(coordinator, symbol, "market_status"))
+        
+        entities.append(YahooFinanceSensor(coordinator, symbol, "beta"))
             
     # Total Portfolio sensor
     if any(amt > 0 for amt in coordinator.symbol_definitions.values()):
@@ -171,6 +185,19 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             self._attr_name = "Portfolio Total Value"
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_icon = "mdi:bank"
+        elif sensor_type == "esg_score":
+            self._attr_name = f"{symbol} ESG Score"
+            self._attr_icon = "mdi:leaf"
+        elif sensor_type == "ytd_return":
+            self._attr_name = f"{symbol} YTD Return"
+            self._attr_native_unit_of_measurement = "%"
+            self._attr_icon = "mdi:chart-line-variant"
+        elif sensor_type == "market_status":
+            self._attr_name = f"{symbol} Market Status"
+            self._attr_icon = "mdi:clock-check"
+        elif sensor_type == "beta":
+            self._attr_name = f"{symbol} Beta Factor"
+            self._attr_icon = "mdi:calculator-variant"
 
         if symbol == "__portfolio__":
              self.entity_id = f"sensor.{DOMAIN}_total_portfolio_value"
@@ -221,12 +248,22 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
             return data.get("twoHundredDayAverage")
         elif self.sensor_type == "total_portfolio_value":
              return self.coordinator.data.get("__portfolio__", {}).get("total_value")
+        elif self.sensor_type == "esg_score":
+            return data.get("totalEsg")
+        elif self.sensor_type == "ytd_return":
+            val = data.get("ytdReturn")
+            return round(val * 100, 2) if val is not None else None
+        elif self.sensor_type == "market_status":
+            return data.get("marketState")
+        elif self.sensor_type == "beta":
+            val = data.get("beta")
+            return round(val, 2) if val is not None else None
         return None
 
     @property
     def native_unit_of_measurement(self):
         """Return the unit of measurement."""
-        if self.sensor_type in ["change_pct", "dividend_yield", "portfolio_weight"]:
+        if self.sensor_type in ["change_pct", "dividend_yield", "portfolio_weight", "ytd_return"]:
             return "%"
         
         # These sensors do not have units
@@ -258,5 +295,16 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
                 "dividendYield": info.get("dividendYield"),
                 "exDividendDate": info.get("exDividendDate"),
                 "nextEarningsDate": info.get("nextEarningsDate"),
+                "beta": info.get("beta"),
+                "totalEsg": info.get("totalEsg"),
+                "environmentScore": info.get("environmentScore"),
+                "socialScore": info.get("socialScore"),
+                "governanceScore": info.get("governanceScore"),
+                "marketState": info.get("marketState"),
+                "preMarketPrice": info.get("preMarketPrice"),
+                "postMarketPrice": info.get("postMarketPrice"),
+                "fiftyDayAverage": info.get("fiftyDayAverage"),
+                "twoHundredDayAverage": info.get("twoHundredDayAverage"),
+                "ytdReturn": info.get("ytdReturn")
             }
         return {}

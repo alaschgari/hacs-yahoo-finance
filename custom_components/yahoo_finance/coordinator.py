@@ -9,7 +9,16 @@ import asyncio
 import random
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_UPDATE_INTERVAL, CONF_SCAN_INTERVAL, CONF_ECO_THRESHOLD, get_headers
+from .const import (
+    DOMAIN, 
+    DEFAULT_SCAN_INTERVAL, 
+    MIN_UPDATE_INTERVAL, 
+    CONF_SCAN_INTERVAL, 
+    CONF_ECO_THRESHOLD, 
+    CONF_BASE_CURRENCY,
+    CONF_EXT_HOURS,
+    get_headers
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,12 +29,14 @@ _COOLDOWN_DURATION = 300  # 5 minutes
 class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Yahoo Finance data."""
 
-    def __init__(self, hass, symbol_definitions, scan_interval=DEFAULT_SCAN_INTERVAL, eco_threshold=600):
+    def __init__(self, hass, symbol_definitions, scan_interval=DEFAULT_SCAN_INTERVAL, eco_threshold=600, base_currency="USD", ext_hours=False):
         """Initialize."""
         self.symbol_definitions = symbol_definitions
         self.symbols = list(symbol_definitions.keys())
         self.scan_interval = scan_interval
         self.eco_threshold = eco_threshold
+        self.base_currency = base_currency
+        self.ext_hours = ext_hours
         self._slow_update_interval = 21600  # 6 hours
         self._last_slow_update = 0
         super().__init__(
@@ -35,6 +46,7 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=scan_interval),
         )
         self._last_update_success_time = 0
+        self._fx_rates = {}
 
     async def _async_update_data(self):
         """Fetch data from Yahoo Finance."""
@@ -67,55 +79,56 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
         fetch_slow_data = False
         if now > self._last_slow_update + self._slow_update_interval:
             fetch_slow_data = True
-
-        def fetch_batch(symbols, fetch_slow):
+        def fetch_batch(symbols, fetch_slow, ext_hours=False, base_currency="USD"):
             try:
-                tickers = yf.Tickers(" ".join(symbols))
+                # Add currency pairs to symbols if they are missing
+                all_request_symbols = list(symbols)
+                currencies_to_fetch = set()
                 
+                tickers = yf.Tickers(" ".join(all_request_symbols))
                 batch_data = {}
-                for symbol in symbols:
+                fx_rates = {}
+
+                for symbol in all_request_symbols:
                     ticker = tickers.tickers.get(symbol)
-                    if not ticker:
-                        continue
-                        
-                    info = ticker.fast_info
-                    if not info:
-                        continue
+                    if not ticker: continue
                     
                     try:
-                        price = info.last_price
-                        prev_close = info.previous_close
+                        # Use fast_info for basic data
+                        fast = ticker.fast_info
                         
-                        # Base data
+                        # Basic Data
                         data = {
-                            "regularMarketPrice": price,
-                            "currency": info.currency,
-                            "regularMarketChangePercent": (price - prev_close) / prev_close * 100 if price and prev_close else 0,
-                            "dayHigh": info.day_high,
-                            "dayLow": info.day_low,
-                            "marketCap": info.market_cap,
-                            "volume": info.last_volume,
-                            "open": info.open,
-                            "yearHigh": info.year_high,
-                            "yearLow": info.year_low,
+                            "regularMarketPrice": fast.last_price,
+                            "currency": fast.currency,
+                            "regularMarketChangePercent": ((fast.last_price - fast.previous_close) / fast.previous_close * 100) if fast.last_price and fast.previous_close else 0,
+                            "marketCap": fast.market_cap,
                             "symbol": symbol,
-                            "longName": symbol, 
-                            "shortName": symbol,
+                            "longName": symbol,
                         }
 
-                        # Slow data (only if requested)
                         if fetch_slow:
-                            # Ticker.info is slower but contains earnings/dividends
-                            # We only fetch this every 6 hours
-                            ext_info = ticker.info
+                            info = ticker.info
                             data.update({
-                                "dividendYield": ext_info.get("dividendYield"),
-                                "exDividendDate": ext_info.get("exDividendDate"),
-                                "nextEarningsDate": ext_info.get("nextEarningsDate"),
-                                "forwardPE": ext_info.get("forwardPE"),
-                                "trailingPE": ext_info.get("trailingPE"),
-                                "longName": ext_info.get("longName") or symbol,
-                                "shortName": ext_info.get("shortName") or symbol,
+                                "longName": info.get("longName") or symbol,
+                                "shortName": info.get("shortName") or symbol,
+                                "dividendYield": info.get("dividendYield"),
+                                "exDividendDate": info.get("exDividendDate"),
+                                "nextEarningsDate": info.get("nextEarningsDate"),
+                                "forwardPE": info.get("forwardPE"),
+                                "trailingPE": info.get("trailingPE"),
+                                "beta": info.get("beta"),
+                                "totalEsg": info.get("totalEsg"),
+                                "environmentScore": info.get("environmentScore"),
+                                "socialScore": info.get("socialScore"),
+                                "governanceScore": info.get("governanceScore"),
+                                "marketState": info.get("marketState"),
+                                "preMarketPrice": info.get("preMarketPrice"),
+                                "postMarketPrice": info.get("postMarketPrice"),
+                                "fiftyDayAverage": info.get("fiftyDayAverage"),
+                                "twoHundredDayAverage": info.get("twoHundredDayAverage"),
+                                "ytdReturn": info.get("ytdReturn"),
+                                "trailingAnnualDividendRate": info.get("trailingAnnualDividendRate"),
                                 "news": [
                                     {
                                         "title": n.get("content", {}).get("title"),
@@ -126,20 +139,37 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                                 ],
                             })
                             
+                            # Collect currencies for FX fetching
+                            if fast.currency and fast.currency != base_currency:
+                                currencies_to_fetch.add(f"{fast.currency}{base_currency}=X")
+
                         batch_data[symbol] = data
                     except Exception as e:
                         _LOGGER.debug("Error extracting data for %s: %s", symbol, e)
-                        continue
-                        
-                return batch_data, fetch_slow
+
+                # Fetch FX rates if any
+                if currencies_to_fetch:
+                    fx_tickers = yf.Tickers(" ".join(currencies_to_fetch))
+                    for fx_sym in currencies_to_fetch:
+                        try:
+                            fx_rates[fx_sym[:3]] = fx_tickers.tickers[fx_sym].fast_info.last_price
+                        except: pass
+
+                return batch_data, fetch_slow, fx_rates
             except Exception as ex:
                 _LOGGER.warning("Batch fetch failed: %s", ex)
-                return None, False
+                return None, False, {}
 
         # Add a random delay before the batch request to be stealthy
         await asyncio.sleep(random.uniform(2.0, 5.0))
         
-        result, was_slow = await self.hass.async_add_executor_job(fetch_batch, self.symbols, fetch_slow_data)
+        result, was_slow, fx_rates = await self.hass.async_add_executor_job(
+            fetch_batch, self.symbols, fetch_slow_data, self.ext_hours, self.base_currency
+        )
+        
+        # Store FX rates for conversion
+        if fx_rates:
+            self._fx_rates.update(fx_rates)
         
         if result == "429":
             _LOGGER.warning("Hit 429 Rate Limit during batch fetch. Entering 5-minute cooldown.")
@@ -161,10 +191,27 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                 val["owned_amount"] = amount
                 
                 if amount > 0 and val.get("regularMarketPrice"):
-                    val["total_value"] = amount * val["regularMarketPrice"]
-                    total_portfolio_value += val["total_value"]
+                    price = val["regularMarketPrice"]
+                    currency = val.get("currency", "USD")
+                    
+                    # Store original total value
+                    val["total_value"] = amount * price
+                    
+                    # Convert to base currency for portfolio total
+                    if currency != self.base_currency:
+                         rate = self._fx_rates.get(currency)
+                         if rate:
+                             val["total_value_base"] = amount * price * rate
+                         else:
+                             # Try reciprocal if needed or just use 1.0 (though yf should provide the rate)
+                             val["total_value_base"] = amount * price
+                    else:
+                         val["total_value_base"] = amount * price
+                    
+                    total_portfolio_value += val["total_value_base"]
                 else:
                     val["total_value"] = 0
+                    val["total_value_base"] = 0
                 
                 new_data[symbol] = val
 
@@ -173,11 +220,14 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                 if symbol == "__portfolio__":
                     continue
                 if total_portfolio_value > 0:
-                    val["portfolio_weight"] = (val.get("total_value", 0) / total_portfolio_value) * 100
+                    val["portfolio_weight"] = (val.get("total_value_base", 0) / total_portfolio_value) * 100
                 else:
                     val["portfolio_weight"] = 0
             
-            new_data["__portfolio__"] = {"total_value": total_portfolio_value}
+            new_data["__portfolio__"] = {
+                "total_value": total_portfolio_value,
+                "currency": self.base_currency
+            }
             
             self._last_update_success_time = asyncio.get_event_loop().time()
             return new_data

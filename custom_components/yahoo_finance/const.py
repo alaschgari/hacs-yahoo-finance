@@ -19,6 +19,11 @@ CONF_SHOW_PE = "show_pe"
 CONF_SHOW_TREND = "show_trend"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ECO_THRESHOLD = "eco_threshold"
+CONF_BASE_CURRENCY = "base_currency"
+CONF_EXT_HOURS = "ext_hours"
+CONF_SHOW_ESG = "show_esg"
+CONF_SHOW_PERFORMANCE = "show_performance"
+CONF_SHOW_MARKET_STATUS = "show_market_status"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

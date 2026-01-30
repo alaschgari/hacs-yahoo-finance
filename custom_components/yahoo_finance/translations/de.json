@@ -16,10 +16,15 @@
                     "show_earnings": "Earnings-Datum anzeigen",
                     "show_pe": "KGV (P/E Ratio) anzeigen",
                     "show_trend": "Trend-Indikatoren anzeigen",
+                    "show_esg": "ESG Scores anzeigen",
+                    "show_performance": "Performance anzeigen (YTD, 1M, 1Y)",
+                    "show_market_status": "Markt-Status Sensor anzeigen",
+                    "ext_hours": "Nachbörsliche Kurse aktivieren",
+                    "base_currency": "Basis-Währung für Portfolio",
                     "scan_interval": "Update-Intervall (Sekunden)",
                     "eco_threshold": "Eco-Modus Intervall (Sekunden)"
                 },
-                "description": "Gib Ticker-Symbole ein (z.B. AAPL). Nutze **SYMBOL:MENGE** (z.B. AAPL:10) für das Portfolio-Tracking. \n\n**Update-Intervall:** Wie oft Daten während der Marktzeiten geladen werden (min 30s).\n**Eco-Modus:** Intervall für Nächte und Wochenenden, um API-Sperren zu vermeiden."
+                "description": "Konfiguriere deine Pro Trading Integration. Nutze **SYMBOL:MENGE** für das Portfolio-Tracking. \n\n**Basis-Währung:** Portfolio-Summen werden in diese Währung umgerechnet.\n**Extended Hours:** Wenn aktiviert, werden Kurse vor/nach der Börse geladen."
             }
         },
         "error": {
