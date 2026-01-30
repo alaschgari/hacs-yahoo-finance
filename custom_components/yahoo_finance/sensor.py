@@ -213,8 +213,13 @@ class YahooFinanceSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_unit_of_measurement(self):
         """Return the unit of measurement."""
-        if self.sensor_type == "change_pct":
+        if self.sensor_type in ["change_pct", "dividend_yield", "portfolio_weight"]:
             return "%"
+        
+        # These sensors do not have units
+        if self.sensor_type in ["next_earnings", "volume", "pe_ratio"]:
+             return None
+
         if self.coordinator.data and self.symbol in self.coordinator.data:
             return self.coordinator.data[self.symbol].get("currency")
         return None

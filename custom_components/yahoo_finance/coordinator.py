@@ -114,7 +114,14 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                                 "trailingPE": ext_info.get("trailingPE"),
                                 "longName": ext_info.get("longName") or symbol,
                                 "shortName": ext_info.get("shortName") or symbol,
-                                "news": ticker.news[:5] if hasattr(ticker, "news") else [],
+                                "news": [
+                                    {
+                                        "title": n.get("content", {}).get("title"),
+                                        "link": n.get("content", {}).get("canonicalUrl", {}).get("url")
+                                    }
+                                    for n in (ticker.news[:5] if hasattr(ticker, "news") else [])
+                                    if n.get("content", {}).get("title")
+                                ],
                             })
                             
                         batch_data[symbol] = data
