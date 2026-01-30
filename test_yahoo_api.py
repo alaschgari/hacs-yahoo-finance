@@ -9,15 +9,18 @@ sys.path.append(os.path.join(os.getcwd(), 'custom_components'))
 
 try:
     from yahoo_finance.const import get_headers
-except ImportError:
+except Exception as e:
+    print(f"Warning: Failed to import from const.py: {e}")
     # Fallback if running from a different directory structure or plain script
     import random
     USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     ]
     def get_headers():
         return {
-            "User-Agent": random.choice(USER_AGENTS)
+            "User-Agent": random.choice(USER_AGENTS),
+            "Referer": "https://finance.yahoo.com/",
         }
 
 # Configure logging
