@@ -36,18 +36,21 @@ async def async_setup_entry(
     """Set up Yahoo Finance sensor based on a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     
-    show_change_pct = entry.data.get(CONF_SHOW_CHANGE_PCT, True)
-    show_high = entry.data.get(CONF_SHOW_HIGH, True)
-    show_low = entry.data.get(CONF_SHOW_LOW, True)
-    show_market_cap = entry.data.get(CONF_SHOW_MARKET_CAP, False)
-    show_volume = entry.data.get(CONF_SHOW_VOLUME, False)
-    show_open = entry.data.get(CONF_SHOW_OPEN, False)
-    show_52wk_high = entry.data.get(CONF_SHOW_52WK_HIGH, False)
-    show_52wk_low = entry.data.get(CONF_SHOW_52WK_LOW, False)
-    show_dividend = entry.data.get(CONF_SHOW_DIVIDEND, False)
-    show_earnings = entry.data.get(CONF_SHOW_EARNINGS, False)
-    show_pe = entry.data.get(CONF_SHOW_PE, False)
-    show_trend = entry.data.get(CONF_SHOW_TREND, False)
+    # Prioritize options over data
+    conf = {**entry.data, **entry.options}
+    
+    show_change_pct = conf.get(CONF_SHOW_CHANGE_PCT, True)
+    show_high = conf.get(CONF_SHOW_HIGH, True)
+    show_low = conf.get(CONF_SHOW_LOW, True)
+    show_market_cap = conf.get(CONF_SHOW_MARKET_CAP, False)
+    show_volume = conf.get(CONF_SHOW_VOLUME, False)
+    show_open = conf.get(CONF_SHOW_OPEN, False)
+    show_52wk_high = conf.get(CONF_SHOW_52WK_HIGH, False)
+    show_52wk_low = conf.get(CONF_SHOW_52WK_LOW, False)
+    show_dividend = conf.get(CONF_SHOW_DIVIDEND, False)
+    show_earnings = conf.get(CONF_SHOW_EARNINGS, False)
+    show_pe = conf.get(CONF_SHOW_PE, False)
+    show_trend = conf.get(CONF_SHOW_TREND, False)
 
     entities = []
     for symbol in coordinator.symbols:

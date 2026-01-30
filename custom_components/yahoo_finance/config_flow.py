@@ -6,7 +6,7 @@ import voluptuous as vol
 import yfinance as yf
 import requests
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
@@ -117,4 +117,139 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> config_entries.OptionsFlow:
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle Yahoo Finance options."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the options."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                info = await validate_input(self.hass, user_input)
+                return self.async_create_entry(title="", data=info)
+            except vol.Invalid as err:
+                errors["base"] = str(err)
+            except Exception:
+                errors["base"] = "unknown"
+
+        # Convert symbols dict back to string for editing
+        current_symbols_dict = self.config_entry.options.get(
+            CONF_SYMBOLS, self.config_entry.data.get(CONF_SYMBOLS, {})
+        )
+        symbol_list = []
+        for sym, amt in current_symbols_dict.items():
+            if amt > 0:
+                symbol_list.append(f"{sym}:{amt}")
+            else:
+                symbol_list.append(sym)
+        
+        symbols_string = ", ".join(symbol_list)
+
+        options_schema = vol.Schema(
+            {
+                vol.Required(CONF_SYMBOLS, default=symbols_string): str,
+                vol.Optional(
+                    CONF_SHOW_CHANGE_PCT, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_CHANGE_PCT, 
+                        self.config_entry.data.get(CONF_SHOW_CHANGE_PCT, True)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_HIGH, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_HIGH, 
+                        self.config_entry.data.get(CONF_SHOW_HIGH, True)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_LOW, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_LOW, 
+                        self.config_entry.data.get(CONF_SHOW_LOW, True)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_MARKET_CAP, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_MARKET_CAP, 
+                        self.config_entry.data.get(CONF_SHOW_MARKET_CAP, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_VOLUME, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_VOLUME, 
+                        self.config_entry.data.get(CONF_SHOW_VOLUME, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_OPEN, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_OPEN, 
+                        self.config_entry.data.get(CONF_SHOW_OPEN, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_52WK_HIGH, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_52WK_HIGH, 
+                        self.config_entry.data.get(CONF_SHOW_52WK_HIGH, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_52WK_LOW, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_52WK_LOW, 
+                        self.config_entry.data.get(CONF_SHOW_52WK_LOW, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_DIVIDEND, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_DIVIDEND, 
+                        self.config_entry.data.get(CONF_SHOW_DIVIDEND, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_EARNINGS, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_EARNINGS, 
+                        self.config_entry.data.get(CONF_SHOW_EARNINGS, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_PE, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_PE, 
+                        self.config_entry.data.get(CONF_SHOW_PE, False)
+                    )
+                ): bool,
+                vol.Optional(
+                    CONF_SHOW_TREND, 
+                    default=self.config_entry.options.get(
+                        CONF_SHOW_TREND, 
+                        self.config_entry.data.get(CONF_SHOW_TREND, False)
+                    )
+                ): bool,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="init", data_schema=options_schema, errors=errors
         )
