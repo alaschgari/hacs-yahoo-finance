@@ -94,23 +94,30 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                     if not ticker: continue
                     
                     try:
-                        # Use fast_info for basic data
                         fast = ticker.fast_info
                         
                         # Basic Data
                         data = {
                             "regularMarketPrice": fast.last_price,
                             "currency": fast.currency,
-                            "regularMarketChangePercent": ((fast.last_price - fast.previous_close) / fast.previous_close * 100) if fast.last_price and fast.previous_close else 0,
                             "marketCap": fast.market_cap,
                             "symbol": symbol,
                             "longName": symbol,
+                            "regularMarketChangePercent": 0,
                         }
 
+                        if fast.last_price and fast.previous_close:
+                            data["regularMarketChangePercent"] = ((fast.last_price - fast.previous_close) / fast.previous_close * 100)
+
+                        # Market State Logic
+                        # If fast info doesn't have it, we'll try to get it from info during slow fetch
+                        # but we can also infer it if pre/post prices exist
+                        
                         if fetch_slow:
                             info = ticker.info
+                            # Professional Metrics
                             data.update({
-                                "longName": info.get("longName") or symbol,
+                                "longName": info.get("longName") or info.get("shortName") or symbol,
                                 "shortName": info.get("shortName") or symbol,
                                 "dividendYield": info.get("dividendYield"),
                                 "exDividendDate": info.get("exDividendDate"),
@@ -138,6 +145,14 @@ class YahooFinanceDataUpdateCoordinator(DataUpdateCoordinator):
                                     if n.get("content", {}).get("title")
                                 ],
                             })
+                            
+                            # Auto-switch to Extended Hours price if enabled and market is not OPEN
+                            if ext_hours:
+                                state = info.get("marketState")
+                                if state == "PRE" and info.get("preMarketPrice"):
+                                    data["regularMarketPrice"] = info.get("preMarketPrice")
+                                elif (state == "POST" or state == "CLOSED") and info.get("postMarketPrice"):
+                                    data["regularMarketPrice"] = info.get("postMarketPrice")
                             
                             # Collect currencies for FX fetching
                             if fast.currency and fast.currency != base_currency:
