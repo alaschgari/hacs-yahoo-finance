@@ -1,0 +1,6 @@
+{
+    "name": "Yahoo Finance",
+    "render_readme": true,
+    "description": "Home Assistant component which allows you to get stock updates from Yahoo Finance.",
+    "country": "DE"
+}

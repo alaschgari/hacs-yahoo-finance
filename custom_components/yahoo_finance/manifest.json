@@ -1,6 +1,6 @@
 {
   "domain": "yahoo_finance",
-  "name": "Yahoo Finance [DEVELOPMENT/BETA]",
+  "name": "Yahoo Finance",
   "codeowners": [
     "@alaschgari"
   ],
