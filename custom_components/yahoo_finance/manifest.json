@@ -9,7 +9,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/alaschgari/hacs-yahoo-finance/issues",
   "requirements": [
-    "yfinance==0.2.51"
+    "yfinance>=0.2.54"
   ],
-  "version": "1.7.2"
+  "version": "1.7.3"
 }
